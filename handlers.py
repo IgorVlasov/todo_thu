@@ -7,13 +7,14 @@ command = 0
 # 0 - пользователь ничего не выбрал
 # 1 - ожидаем дату для добавления задачи
 # 2 - ожидаем задачу для добавления в словарь
+# 3 - ожидаем вариант отображения задач
 
 userDate, userTask = 0, 0
 
 async def checkDate(date, message):
     global command
     try:
-        time.strptime(date, 'dd/mm/YYYY')
+        time.strptime(date, 'dd.mm.YYYY')
         return True
     except ValueError:
         await message.answer(text = "Неправильный формат даты")
@@ -42,7 +43,9 @@ async def help(message:Message):
 
 @dp.message_handler(commands = "show")
 async def show(message:Message):
-    await message.answer(text = "Работает")
+    global command
+    await message.answer(text = "[ 0 ] - вывести все задачи\n[ 1 ] - задачи по дате")
+    command = 3
 
 
 @dp.message_handler()
@@ -51,7 +54,8 @@ async def inputText(message:Message):
 
     if command == 1:
         # проверка корректности ввода
-
+        if checkDate(userDate, message) == False:
+            return
         # запрос что нужно сделать
         userDate = message.text
         await message.answer("Что нужно сделать?")
@@ -64,3 +68,10 @@ async def inputText(message:Message):
             todo[userDate]=[userTask]
         await message.answer(f"Добавлена '{userTask}' на {userDate}")
         command = 0
+    elif command == 3:
+        if message.text == "0":
+            # сортируем ключи и проходимся по ним циклом
+            for date in sorted( todo.keys() ):
+                # получаем список задач и выводим каждую задачу на новой строке
+                for task in todo[ date ]:
+                    await message.answer(text = f"[{date} - '{task}']")
