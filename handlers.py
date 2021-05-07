@@ -11,14 +11,12 @@ command = 0
 
 userDate, userTask = 0, 0
 
-async def checkDate(date, message):
-    global command
+def checkDate(uDate):
     try:
-        time.strptime(date, 'dd.mm.YYYY')
+        time.strptime(uDate, '%d.%m.%Y')
         return True
     except ValueError:
-        await message.answer(text = "Неправильный формат даты")
-        command = 0
+        return False
 
 async def send_to_admin(dp):
     await bot.send_message(chat_id=admin_id, text="Бот запущен!")
@@ -53,11 +51,17 @@ async def inputText(message:Message):
     global userDate, userTask, command, todo
 
     if command == 1:
-        # проверка корректности ввода
-        if checkDate(userDate, message) == False:
-            return
-        # запрос что нужно сделать
         userDate = message.text
+
+        # проверка корректности ввода
+
+        if checkDate(userDate) == False:
+            await bot.send_message(message.chat.id, "Неверный формат даты")
+            command = 0
+            return
+        
+        # запрос что нужно сделать
+        
         await message.answer("Что нужно сделать?")
         command = 2
     elif command == 2:
