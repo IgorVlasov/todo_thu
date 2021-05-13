@@ -8,6 +8,7 @@ command = 0
 # 1 - ожидаем дату для добавления задачи
 # 2 - ожидаем задачу для добавления в словарь
 # 3 - ожидаем вариант отображения задач
+# 4 - ожидание даты для вывода задачи
 
 userDate, userTask = 0, 0
 
@@ -33,7 +34,9 @@ async def add(message:Message):
 
 @dp.message_handler(commands = "done")
 async def done(message:Message):
-    await message.answer(text = "Работает")
+    global command
+    await message.answer(text = "Введите дату в формате дд.мм.гггг")
+    command = 5
 
 @dp.message_handler(commands = "help")
 async def help(message:Message):
@@ -54,14 +57,11 @@ async def inputText(message:Message):
         userDate = message.text
 
         # проверка корректности ввода
-
         if checkDate(userDate) == False:
             await bot.send_message(message.chat.id, "Неверный формат даты")
             command = 0
             return
-        
-        # запрос что нужно сделать
-        
+       # запрос что нужно сделать
         await message.answer("Что нужно сделать?")
         command = 2
     elif command == 2:
@@ -78,4 +78,63 @@ async def inputText(message:Message):
             for date in sorted( todo.keys() ):
                 # получаем список задач и выводим каждую задачу на новой строке
                 for task in todo[ date ]:
-                    await message.answer(text = f"[{date} - '{task}']")
+                    await message.answer(text = f"[{date}] - '{task}'")
+        elif message.text == "1":
+            await message.answer(text = "Введите дату в формате дд.мм.гггг")
+            command = 4
+        else:
+            await message.answer(text = "Неизвестная комманда")
+            command == 0
+    elif command == 4:
+        userDate = message.text
+
+        # проверка корректности ввода
+        if checkDate(userDate) == False:
+            await bot.send_message(message.chat.id, "Неверный формат даты")
+            command = 0
+            return
+        
+        if userDate in todo:
+            for task in todo[ userDate ]:
+                await message.answer(text = f"[{userDate}] - '{task}'")
+        command = 0
+    elif command == 5:
+        userDate = message.text
+
+        # проверка корректности ввода
+        if checkDate(userDate) == False:
+            await bot.send_message(message.chat.id, "Неверный формат даты")
+            command = 0
+            return
+
+        if  userDate in todo:
+            if len( todo[ userDate ] ) > 1:
+                await message.answer(text = "Какую задачу выполнили?")
+                tmp = 1
+                for task in todo[ userDate]:
+                    await message.answer(text = f"[{tmp}] - '{task}'") 
+                    tmp += 1
+                command = 6
+            else:
+                await message.answer(text = f"Задача { todo.pop(userDate)[0] } - удалена")
+        else:
+            await message.answer(text = "На указанную дату нет задач")
+            command = 0
+    elif command == 6:
+        tmp = todo[userDate]
+        try:
+            index = int(message.text) - 1
+        except ValueError:
+            await message.answer(text = "Не верный формат ввода")
+            command = 0
+
+        if len( tmp ) > index:
+            await message.answer(text = f"Задача { tmp.pop(index) } - удалена")
+            todo[ userDate ] = tmp
+            command = 0
+    else:
+        await message.answer(text = "нет такой команды")
+        await message.answer(text = "для вывода списка команд введите /help")
+
+
+    
