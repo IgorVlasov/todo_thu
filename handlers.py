@@ -69,7 +69,7 @@ async def inputText(message:Message):
         if userDate in todo:
             todo[userDate].append(userTask)
         else:
-            todo[userDate]=[userTask]
+            todo[userDate]=userTask
         await message.answer(f"Добавлена '{userTask}' на {userDate}")
         command = 0
     elif command == 3:
